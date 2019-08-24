@@ -24,15 +24,12 @@ void BuddyAllocator_init(BuddyAllocator* alloc,
                          char* memory,
                          int min_bucket_size);
 
-// returns (allocates) a buddy at a given level.
-// side effect on the internal structures
-// 0 id no memory available
-BuddyListItem* BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level);
+// allocates a buddy at a given level.
+// returns bit_num on bitmap
+int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level);
 
-
-// releases an allocated buddy, performing the necessary joins
-// side effect on the internal structures
-void BuddyAllocator_releaseBuddy(BuddyAllocator* alloc, BuddyListItem* item);
+// releases an allocated buddy
+void BuddyAllocator_releaseBuddy(BuddyAllocator* alloc, int bit_num);
 
 //allocates memory
 void* BuddyAllocator_malloc(BuddyAllocator* alloc, int size);
