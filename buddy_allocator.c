@@ -3,6 +3,13 @@
 #include <math.h> // for floor and log2
 #include "buddy_allocator.h"
 
+#define FREE 1
+#define OCCUPIED 0
+#define firstIdx(level) 1 << level
+#define nodesOnLevel(level) 1 << level
+#define leftSonIdx(idx) idx * 2
+#define rightSonIdx(idx) idx * 2 + 1
+
 // these are trivial helpers to support you in case you want
 // to do a bitmap implementation
 static int levelIdx(size_t idx) {
@@ -16,10 +23,6 @@ static int buddyIdx(int idx) {
 
 static int parentIdx(int idx) {
   return idx/2;
-}
-
-static int startIdx(int idx) {
-  return (idx - (1 << levelIdx(idx)));
 }
 
 void BuddyAllocator_init(BuddyAllocator* alloc,
@@ -36,7 +39,7 @@ void BuddyAllocator_init(BuddyAllocator* alloc,
   BitMap_init(&alloc->bitmap, buffer_size, bitmap_buffer);
   // initialize bitmap to 1 (free)
   for (int i = 0; i < buffer_size; ++i) {
-    BitMap_setBit(&alloc->bitmap, i, 1);
+    BitMap_setBit(&alloc->bitmap, i, FREE);
   }
 
   printf("BUDDY INITIALIZING\n");
@@ -45,27 +48,27 @@ void BuddyAllocator_init(BuddyAllocator* alloc,
   printf("\tmanaged memory %d bytes\n", (1<<num_levels)*min_bucket_size);
 };
 
-static int getMinBuddy(BuddyAllocator* alloc, int level) {
-  // we start searching from the last pos
-  for (int i = pow(2, level + 1) - 1; i > 0; i--) {
-    if (BitMap_bit(&alloc->bitmap, i)) return i;
-  }
-  printf("no buddy found :(\n");
-  return 0;
+int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level) {
+  if (level < 0) return -1;
+  assert(level <= alloc->num_levels);
+  // we'll use the properties of the tree to check for all the nodes in the level
+  int buddyIdx = firstIdx(level);
+  while (buddyIdx < nodesOnLevel(level) && !BitMap_bit(&alloc->bitmap, FREE)) buddyIdx++;
+  BitMap_setBit(&alloc->bitmap, buddyIdx, OCCUPIED);
+  // we need to set both parents and childs to OCCUPIED
+  setParentsToOccupied(alloc, buddyIdx);
+  setChildToOccupied(alloc, buddyIdx);
+  return buddyIdx;
 }
 
-int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level) {
-  if (level < 0) return 0;
-  assert(level <= alloc->num_levels);
-  // need to find smallest buddy
-  int idx = getMinBuddy(alloc, level);
-  if (idx == 0) return 0;
-  // set 0 (occupied) to self and parents
-  for (int i = idx; i > 0; i = i / 2) {
-    BitMap_setBit(&alloc->bitmap, idx, 0);
+static void setParentsToOccupied(BuddyAllocator* alloc, int buddyIdx) {
+  for (int parentIdx = buddyIdx / 2; parentIdx < 0; parentIdx /= 2) {
+    BitMap_setBit(&alloc->bitmap, parentIdx, OCCUPIED);
   }
+}
+
+static void setChildToOccupied(BuddyAllocator* alloc, int idx) {
   // todo
-  return 0;
 }
 
 void BuddyAllocator_releaseBuddy(BuddyAllocator* alloc, int bit_num) {
@@ -83,8 +86,9 @@ void* BuddyAllocator_malloc(BuddyAllocator* alloc, int size) {
 
   printf("requested: %d bytes, level %d \n", size, level);
 
-  // todo
-
+  int buddyIdx = BuddyAllocator_getBuddy(alloc, level);
+  if (buddyIdx < 0) return -1;
+  // todo assign memory
   return 0;
 }
 
