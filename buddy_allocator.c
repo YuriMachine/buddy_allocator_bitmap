@@ -7,6 +7,7 @@
 #define OCCUPIED 0
 #define firstIdx(level) ((1 << level) - 1)
 #define nodesOnLevel(level) (1 << level)
+#define maxIndexOnLevel(level) (firstIdx(level) + nodesOnLevel(level))
 #define leftSonIdx(idx) (idx * 2) + 1
 #define rightSonIdx(idx) (idx * 2 + 2)
 #define parentIdx(idx) (idx & 1 ? idx / 2 : idx / 2 - 1)
@@ -60,7 +61,7 @@ int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level) {
   assert(level <= alloc->num_levels);
   // we'll use the properties of the tree to check for all the nodes in the level
   int buddyIdx = firstIdx(level);
-  while (buddyIdx < nodesOnLevel(level) && !BitMap_get(&alloc->bitmap, FREE)) buddyIdx++;
+  while (buddyIdx < maxIndexOnLevel(level) && !BitMap_get(&alloc->bitmap, buddyIdx)) buddyIdx++;
   BitMap_set(&alloc->bitmap, buddyIdx, OCCUPIED);
   // we need to set both parents and childs to OCCUPIED
   setParentsToOccupied(alloc, buddyIdx);
