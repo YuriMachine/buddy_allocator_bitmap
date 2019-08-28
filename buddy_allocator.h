@@ -10,6 +10,12 @@ typedef struct  {
   int min_bucket_size; // the minimum page of RAM that can be returned
 } BuddyAllocator;
 
+typedef struct {
+  char* memoryChunk;
+  int size;
+} BuddyItem;
+
+void BuddyItem_init(BuddyItem* item, char* memory, int size);
 
 // computes the size in bytes for the buffer of the allocator
 int BuddyAllocator_calcSize(int num_levels);
@@ -31,7 +37,7 @@ int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level);
 void BuddyAllocator_releaseBuddy(BuddyAllocator* alloc, int bit_num);
 
 //allocates memory
-void* BuddyAllocator_malloc(BuddyAllocator* alloc, int size);
+BuddyItem* BuddyAllocator_malloc(BuddyAllocator* alloc, int size);
 
 //releases allocated memory
-void BuddyAllocator_free(BuddyAllocator* alloc, void* mem);
+void BuddyAllocator_free(BuddyAllocator* alloc, BuddyItem* item);
