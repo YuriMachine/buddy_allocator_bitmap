@@ -80,7 +80,7 @@ int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level) {
 
 // allocates memory
 BuddyItem* BuddyAllocator_malloc(BuddyAllocator* alloc, int size) {
-  if (size <= 0 || size > (1 << num_levels) * min_bucket_size) return 0;
+  if (size <= 0 || size > (1 << alloc->num_levels) * alloc->min_bucket_size) return 0;
   // we determine the level of the page
   int mem_size = (1 << alloc->num_levels) * alloc->min_bucket_size;
   int level = levelIdx(mem_size / size);
@@ -110,4 +110,11 @@ void BuddyAllocator_free(BuddyAllocator* alloc, BuddyItem* mem) {
   BitMap_set(&alloc->bitmap, idx, FREE);
   setParentsStatus(alloc, idx, FREE);
   setChildStatus(alloc, idx, FREE);
+}
+
+void test(BuddyAllocator* alloc) {
+  for (int i = 0; i < alloc->bitmap.num_bits; ++i) {
+    printf("%d", BitMap_get(&alloc->bitmap, i));
+  }
+  printf("\n");
 }
