@@ -1,10 +1,9 @@
 #include <stdint.h>
 
 typedef struct {
-    int num_bits;
-    int num_ints;
-    int buffer_size;
-    uint8_t* buffer;
+  int num_bits;
+  int buffer_size;
+  uint8_t* buffer;
 } BitMap;
 
 void BitMap_init(BitMap* bit_map, int bits, int buffer_size, uint8_t* buffer);

@@ -9,20 +9,12 @@
 #define nodesOnLevel(level) (1 << level)
 #define leftSonIdx(idx) (idx * 2) + 1
 #define rightSonIdx(idx) (idx * 2 + 2)
+#define parentIdx(idx) (idx & 1 ? idx / 2 : idx / 2 - 1)
 
 // these are trivial helpers to support you in case you want
 // to do a bitmap implementation
 static int levelIdx(size_t idx) {
   return (int) floor(log2(idx));
-}
-
-static int buddyIdx(int idx) {
-  if (idx&0x1) return idx - 1;
-  return idx + 1;
-}
-
-static int parentIdx(int idx) {
-  return idx/2;
 }
 
 void BuddyAllocator_init(BuddyAllocator* alloc,
@@ -48,8 +40,8 @@ void BuddyAllocator_init(BuddyAllocator* alloc,
 };
 
 static void setParentsToOccupied(BuddyAllocator* alloc, int buddyIdx) {
-  for (int parentIdx = buddyIdx / 2; parentIdx > 0; parentIdx /= 2) {
-    BitMap_set(&alloc->bitmap, parentIdx, OCCUPIED);
+  for (int pIdx = parentIdx(buddyIdx); pIdx > 0; pIdx = parentIdx(pIdx)) {
+    BitMap_set(&alloc->bitmap, pIdx, OCCUPIED);
   }
   // root special case
   BitMap_set(&alloc->bitmap, 0, OCCUPIED);
