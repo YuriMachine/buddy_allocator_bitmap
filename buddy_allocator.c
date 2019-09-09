@@ -19,9 +19,9 @@ static int levelIdx(size_t idx) {
   return (int) floor(log2(idx));
 }
 
-void BuddyItem_init(BuddyItem* item, char* memory, int size) {
+void BuddyItem_init(BuddyItem* item, char* memory, int idx) {
   item->memoryChunk = memory + sizeof(BuddyItem);
-  item->size = size;
+  item->idx = idx;
 }
 
 void BuddyAllocator_init(BuddyAllocator* alloc,
@@ -31,7 +31,7 @@ void BuddyAllocator_init(BuddyAllocator* alloc,
                          char* memory,
                          int min_bucket_size) {
   alloc->memory = memory;
-  alloc->num_levels = num_levels;
+  alloc->num_levels = num_levels - 1;
   alloc->min_bucket_size = min_bucket_size;
   assert(num_levels < MAX_LEVELS);
   BitMap_init(&alloc->bitmap, nodesOnLevel(num_levels) - 1, buffer_size, bitmap_buffer);
@@ -93,28 +93,29 @@ BuddyItem* BuddyAllocator_malloc(BuddyAllocator* alloc, int size) {
   if (buddyIdx < 0) return NULL;
   char* indexedMemory = alloc->memory + (buddyIdx - firstIdx(level)) * buddy_size;
   BuddyItem* newElem = (BuddyItem*) indexedMemory;
-  BuddyItem_init(newElem, indexedMemory, size);
+  BuddyItem_init(newElem, indexedMemory, buddyIdx);
   return newElem;
 }
 
 // releases allocated memory
 void BuddyAllocator_free(BuddyAllocator* alloc, BuddyItem* mem) {
   printf("freeing %p\n", mem);
-  // get index
-  int mem_size = (1 << alloc->num_levels) * alloc->min_bucket_size;
-  int level = levelIdx(mem_size / mem->size);
-  int buddy_size = mem_size >> level;
-  int memory_offset = mem->memoryChunk - alloc->memory;
-  int idx = memory_offset / buddy_size + firstIdx(level);
   // free bits
-  BitMap_set(&alloc->bitmap, idx, FREE);
-  setParentsStatus(alloc, idx, FREE);
-  setChildStatus(alloc, idx, FREE);
+  BitMap_set(&alloc->bitmap, mem->idx, FREE);
+  setParentsStatus(alloc, mem->idx, FREE);
+  setChildStatus(alloc, mem->idx, FREE);
 }
 
 void test(BuddyAllocator* alloc) {
+  int n1 = 1;
+  int n2 = 1;
   for (int i = 0; i < alloc->bitmap.num_bits; ++i) {
+    if (n2 == n1*2) {
+      printf("\n");
+      n1 = n2;
+    }
     printf("%d", BitMap_get(&alloc->bitmap, i));
+    n2++;
   }
   printf("\n");
 }

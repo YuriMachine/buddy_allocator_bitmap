@@ -12,10 +12,10 @@ typedef struct  {
 
 typedef struct {
   char* memoryChunk;
-  int size;
+  int idx;
 } BuddyItem;
 
-void BuddyItem_init(BuddyItem* item, char* memory, int size);
+void BuddyItem_init(BuddyItem* item, char* memory, int idx);
 
 // computes the size in bytes for the buffer of the allocator
 int BuddyAllocator_calcSize(int num_levels);
